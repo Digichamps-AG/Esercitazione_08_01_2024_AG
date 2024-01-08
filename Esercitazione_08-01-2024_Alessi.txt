@@ -1,0 +1,316 @@
+/*Ho immaginato che l'ecommerce per cui devo fare analisi dati
+sia un negozio di videogiochi che vuole capire
+come stanno andando le vendite dopo aver deciso di 
+creare un database per tenere traccia degli ordini ricevuti
+
+
+Domande 1 e 2 (Creazione delle Tabelle; Inserimento dei Dati)
+quando è venuto fuori il problema degli ID avevo già iniziato a fare gli esercizi, quindi
+i nomi usati nelle tabelle per gli ID sono quelli del primo testo dell'esercizio,
+però li ho trattati come se avessero lo stesso nome, come da nuovo testo, 
+non considerandoli come PK
+*/
+
+
+-- creo la tabella "vendite"
+CREATE TABLE vendite (
+    id_transazione INT,
+    categoria_prodotto VARCHAR(100),
+    costo_vendita DECIMAL(4, 2),
+    sconto DECIMAL(2, 2)
+);
+
+-- inserisco 30 righe nella tabella "vendite"
+INSERT INTO vendite VALUES
+(1, 'Action', 49.99, 0.80),
+(2, 'Adventure', 39.99, 0.05),
+(3, 'Simulation', 29.99, 0.50),
+(4, 'RPG', 59.99, 0.20),
+(5, 'Sports', 44.99, 0.51),
+(6, 'Strategy', 34.99, 0.08),
+(7, 'Action', 49.99, 0.10),
+(8, 'Adventure', 39.99, 0.05),
+(9, 'Simulation', 29.99, 0.15),
+(10, 'RPG', 59.99, 0.55),
+(11, 'Action', 42.99, 0.15),
+(12, 'Adventure', 36.99, 0.25),
+(13, 'Simulation', 28.99, 0.12),
+(14, 'RPG', 54.99, 0.30),
+(15, 'Sports', 40.99, 0.51),
+(16, 'Strategy', 32.99, 0.18),
+(17, 'Action', 46.99, 0.08),
+(18, 'Adventure', 37.99, 0.15),
+(19, 'Simulation', 26.99, 0.10),
+(20, 'RPG', 52.99, 0.40),
+(21, 'Sports', 43.99, 0.63),
+(22, 'Strategy', 35.99, 0.15),
+(23, 'Action', 44.99, 0.18),
+(24, 'Adventure', 38.99, 0.20),
+(25, 'Simulation', 30.99, 0.75),
+(26, 'RPG', 56.99, 0.35),
+(27, 'Sports', 48.99, 0.15),
+(28, 'Strategy', 39.99, 0.12),
+(29, 'Action', 47.99, 0.28),
+(30, 'Adventure', 34.99, 0.10);
+
+-- creo la tabella "dettagli_vendite"
+CREATE TABLE dettagli_vendite (
+    id_cliente INT,
+    data_transazione DATE,
+    quantita INT
+    
+);
+
+-- inserisco 30 righe nella tabella "dettagli_vendite"
+INSERT INTO dettagli_vendite VALUES
+(1, '2024-01-01', 3),
+(2, '2023-12-07', 2),
+(3, '2024-01-01', 1),
+(4, '2023-12-31', 4),
+(5, '2023-10-28', 2),
+(6, '2024-01-01', 3),
+(7, '2023-10-22', 2),
+(8, '2023-12-24', 1),
+(9, '2023-12-25', 4),
+(10, '2023-01-02', 3),
+(11, '2023-03-15', 2),
+(12, '2023-11-18', 3),
+(13, '2023-06-20', 1),
+(14, '2023-11-30', 5),
+(15, '2023-10-15', 2),
+(16, '2023-05-10', 4),
+(17, '2023-07-25', 3),
+(18, '2023-08-10', 2),
+(19, '2023-07-25', 1),
+(20, '2023-06-05', 3),
+(21, '2023-12-24', 2),
+(22, '2023-01-20', 4),
+(23, '2023-09-30', 1),
+(24, '2023-09-10', 3),
+(25, '2024-01-01', 2),
+(26, '2023-07-05', 4),
+(27, '2023-02-28', 2),
+(28, '2023-12-20', 1),
+(29, '2023-04-05', 3),
+(30, '2023-01-30', 2);
+
+
+
+
+-- 3. Query Semplici: 
+-- Seleziona tutte le vendite avvenute in una specifica data (1 gennaio 2024)
+SELECT *
+FROM vendite v
+JOIN dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+WHERE dv.data_transazione = '2024-01-01';
+
+
+-- Elenco delle vendite con sconti maggiori del 50%.
+SELECT *
+FROM vendite v
+JOIN dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+WHERE sconto > 0.50;
+
+
+-- 4. Aggregazione dei Dati: 
+-- Calcola il totale delle vendite per categoria (inteso come euro totali).
+SELECT categoria_prodotto, SUM(costo_vendita * quantita) AS totale_vendite
+FROM vendite v
+JOIN dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+GROUP BY categoria_prodotto;
+ 
+    
+-- Trova il numero totale di prodotti venduti per ogni categoria (inteso come quantità di prodotto venduto).
+SELECT categoria_prodotto, SUM(quantita) AS totale_prodotti_venduti
+FROM vendite v
+JOIN dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+GROUP BY categoria_prodotto;
+
+
+
+-- 5. Funzioni di Data:
+-- Seleziona le vendite dell'ultimo trimestre. 
+
+SELECT *
+FROM vendite v
+JOIN dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+WHERE dv.data_transazione >= CURDATE() - INTERVAL 3 MONTH
+-- per rendere più facilmente visibile che le date sono dell'ultimo trimestre,
+-- le ho ordinate in ordine decrescente
+ORDER BY data_transazione DESC;
+
+
+-- Raggruppa le vendite per mese e calcola il totale delle vendite per ogni mese.
+-- volevo che nella tabella si vedesse il nome del mese, perciò ho cercato
+-- online se ci fosse una funzione che restituisse il nome testuale del mese data una variabile 
+-- in formato data, e ho trovato MONTHNAME
+SELECT MONTHNAME(dv.data_transazione) AS mese, SUM(v.costo_vendita * dv.quantita) AS totale_vendite_mese
+FROM vendite v
+JOIN dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+GROUP BY mese
+-- volevo vedere quali mesi erano quelli con vendite più grosse, quindi ho ordinato per totale vendite mensili
+ORDER BY totale_vendite_mese DESC;
+
+
+
+-- 7. Analisi degli Sconti: 
+-- Trova la categoria con lo sconto medio più alto.
+SELECT categoria_prodotto, AVG(sconto) AS sconto_medio
+FROM vendite
+GROUP BY categoria_prodotto
+ORDER BY sconto_medio DESC
+-- ho cercato online come poter avere il risultato solo della prima riga e ho trovato la funzione LIMIT
+-- ordinando in modo decrescente e selezionando solo la prima riga, si ottiene il prodotto con sconto medio maggiore
+LIMIT 1;
+
+
+-- 8. Variazioni delle Vendite: 
+-- Confronta le vendite mese per mese per vedere l'incremento o il decremento delle vendite. 
+-- Calcola l’incremento o decremento mese per mese
+-- per fare questo esercizio mi sono aiutata con alcuni tutorial online/materiale di SQL
+-- per capire quali funzioni usare e come usarle correttamente
+
+-- seleziono le informazioni di mio interesse
+
+
+SELECT
+mese,
+guadagno_mese,
+guadagno_mese - guadagno_mese_precedente AS variazione,
+CASE
+    WHEN guadagno_mese_precedente IS NULL THEN 'Primo mese'
+    WHEN guadagno_mese > guadagno_mese_precedente THEN 'Aumentato'
+    WHEN guadagno_mese < guadagno_mese_precedente THEN 'Diminuito'
+        ELSE 'Invariato'
+    END AS trend
+-- creo una tabella aggreggata con le informazioni che mi servono, 
+-- in modo da avere la tabella "guadagni_mensili" da cui prendere le informazioni che mi servono
+FROM (
+SELECT
+-- estraggo il mese dalla data di transazione e lo rinomino
+MONTH(dv.data_transazione) AS mese,
+-- calcolo il guadagno per ogni mese
+SUM(v.costo_vendita * dv.quantita) AS guadagno_mese,
+-- cercando come calcolare la differenza tra il guadagno del mese rispetto a quello precedente
+-- ho trovato la funzione "LAG() OVER (ORDER BY)"
+LAG(SUM(v.costo_vendita * dv.quantita)) OVER (ORDER BY MONTH(dv.data_transazione)) AS guadagno_mese_precedente
+FROM
+vendite v
+JOIN
+-- qui ho fatto una join tra le due tabelle basata sulla corrispondenza degli ID
+dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+    GROUP BY mese
+) guadagni_mensili
+ORDER BY
+    mese;
+
+
+-- 9. Analisi Stagionale: 
+-- Confronta le vendite totali in diverse stagioni.
+-- per fare questo punto ho seguito alcuni tutorial online
+-- che mi hanno aiutata a capire come dividere i mesi in trimestri
+
+-- prima creo le stagioni e assegno quella corrispondente a ogni transazione
+-- anche in questo caso ho usato CASE, WHEN, END AS
+SELECT
+    dv.id_cliente,
+    dv.data_transazione,
+    CASE
+        WHEN MONTH(dv.data_transazione) IN (12, 1, 2) THEN 'Inverno'
+        WHEN MONTH(dv.data_transazione) IN (3, 4, 5) THEN 'Primavera'
+        WHEN MONTH(dv.data_transazione) IN (6, 7, 8) THEN 'Estate'
+        WHEN MONTH(dv.data_transazione) IN (9, 10, 11) THEN 'Autunno'
+    END AS stagione
+FROM dettagli_vendite dv;
+
+-- in base alla suddivisione e assegnazione precedente, faccio il calcolo delle vendite totali per ognuna
+-- delle 4 stagioni create
+SELECT
+    stagione,
+    SUM(v.costo_vendita * dv.quantita) AS vendite_totali
+FROM vendite v
+JOIN dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+JOIN (
+    SELECT
+        dv.id_cliente,
+        dv.data_transazione,
+        CASE
+            WHEN MONTH(dv.data_transazione) IN (12, 1, 2) THEN 'Inverno'
+            WHEN MONTH(dv.data_transazione) IN (3, 4, 5) THEN 'Primavera'
+            WHEN MONTH(dv.data_transazione) IN (6, 7, 8) THEN 'Estate'
+            WHEN MONTH(dv.data_transazione) IN (9, 10, 11) THEN 'Autunno'
+        END AS stagione
+    FROM dettagli_vendite dv
+) stagioni ON dv.id_cliente = stagioni.id_cliente
+GROUP BY stagione;
+
+
+-- 10. Clienti Fedeli:
+SELECT
+    id_cliente,
+    COUNT(id_cliente) AS numero_acquisti
+FROM
+    dettagli_vendite
+GROUP BY
+    id_cliente
+-- come nell'esercizio di prima, usare DESC e LIMIT mi permette di avere solo i top 5 acquirenti
+ORDER BY
+    numero_acquisti DESC
+LIMIT 5;
+
+
+-- DOMANDA EXTRA 1: Quale categoria ha venduto di più nel 2023?
+SELECT
+categoria_prodotto,
+SUM(quantita) AS quantita_totale
+FROM
+vendite v
+JOIN
+dettagli_vendite dv ON v.id_transazione = dv.id_cliente
+    WHERE
+    YEAR(dv.data_transazione) = 2023
+GROUP BY
+categoria_prodotto
+ORDER BY
+quantita_totale DESC
+LIMIT 1;
+
+-- DOMANDA EXTRA 2: Quale categoria aveva lo sconto medio più alto rispetto al prezzo di partenza?
+SELECT
+    v.categoria_prodotto,
+    AVG(v.sconto / v.costo_vendita) AS sconto_medio
+FROM
+    vendite v
+GROUP BY
+    v.categoria_prodotto
+ORDER BY
+    sconto_medio DESC
+LIMIT 1;
+
+
+/*
+Dai risultati delle query si possono fare già alcune considerazioni e porsi delle domande.
+Per esempio: 
+
+1)La categoria con maggiori sconti è "sport". Come mai? Forse i giochi di sport
+vendono poco e quindi pur di riuscire a venderli il negozio deve fare forti sconti.
+In futuro potrebbe essere meglio comprare meno giochi di questo tipo.
+
+2)I mesi in cui le vendite sono maggiori sono Gennaio e Dicembre. Perchè?
+Forse essendo mesi con vacanze e festività le persone sono più portate a comprare giochi perchè
+sanno che avranno il tempo di giocarli.
+O forse dovendo fare regali le vendite aumentano.
+Si potrebbe pènsare di attivare in questi periodi qualche promozione per aumentare ulteriormente le vendite.
+Oppure si potrebbe cercare di capire perchè agosto è il mese con vendite minori.
+Forse vanno tutti in vacanza e quindi non spendono soldi per comprare giochi?
+
+3)Guardando le vendite stagioni si vede che in inverno queste sono maggiori.
+Forse le persone stanno più a casa per via del freddo e, uscendo meno, hanno più voglia di giocare?
+Durante i mesi estivi si potrebbero fare delle promozioni per invogliare i clienti a comprare.
+
+4)Nel 2023 i giochi più venduti sono stati RPG.
+C'è stato qualche gioco particolare che è uscito e ha aumentato le vendite,
+o i giocatori hanno preferito questo tipo di giochi?
+Perchè?
+Forse al negozio conviene acquistare più giochi di questo tipo visto 
+che sembrano molto richiesti?
